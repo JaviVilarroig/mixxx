@@ -92,7 +92,7 @@ int Beats::numBeatsInRangeNew(FrameNum startFrame, FrameNum endFrame) {
     return iBeatsCounter - 2;
 };
 
-QByteArray Beats::toByteArray() const {
+QByteArray Beats::toProtobuff() const {
     QMutexLocker locker(&m_mutex);
     // No guarantees BeatLists are made of a data type which located adjacent
     // items in adjacent memory locations.
@@ -438,16 +438,19 @@ std::unique_ptr<BeatIterator> Beats::findBeatsNew(FrameNum startFrame, FrameNum 
     startBeat.set_frame_position(startFrame);
     stopBeat.set_frame_position(stopFrame);
 
-    BeatList::const_iterator curBeat =
+    BeatList::const_iterator firstBeat =
             std::lower_bound(m_beats.cbegin(), m_beats.cend(), startBeat, BeatLessThan);
 
     BeatList::const_iterator lastBeat =
             std::upper_bound(m_beats.cbegin(), m_beats.cend(), stopBeat, BeatLessThan);
+    if (lastBeat >= m_beats.cbegin()) {
+        lastBeat = m_beats.cend() - 1;
+    }
 
-    if (curBeat >= lastBeat) {
+    if (firstBeat >= lastBeat) {
         return std::unique_ptr<BeatIterator>();
     }
-    return std::make_unique<BeatIterator>(curBeat, lastBeat);
+    return std::make_unique<BeatIterator>(firstBeat, lastBeat);
 }
 
 bool Beats::hasBeatInRangeNew(double startSample, double stopSample) const {
@@ -851,15 +854,16 @@ FrameNum Beats::getLastBeatPosition() const {
 }
 
 QDebug operator<<(QDebug dbg, const BeatsPointer& arg) {
-    dbg << "Beats State";
-    dbg << "\tm_subVersion:" << arg->m_subVersion;
-    dbg << "\tm_iSampleRate:" << arg->m_iSampleRate;
-    dbg << "\tm_dCachedBpm:" << arg->m_dCachedBpm;
-    dbg << "\tm_dLastFrame:" << arg->m_dLastFrame;
-    dbg << "Beats content:";
+    dbg << "Beats State\n";
+    dbg << "\tm_subVersion:" << arg->m_subVersion << "\n";
+    dbg << "\tm_iSampleRate:" << arg->m_iSampleRate << "\n";
+    dbg << "\tm_dCachedBpm:" << arg->m_dCachedBpm << "\n";
+    dbg << "\tm_dLastFrame:" << arg->m_dLastFrame << "\n";
+    dbg << "Beats content(size: " << arg->m_beats.size() << ":\n";
     for (auto beat : arg->m_beats) {
-        dbg << "pos:" << beat.frame_position();
+        dbg << "pos:" << beat.frame_position() << "\n";
     }
+    return dbg;
 }
 
 } // namespace mixxx

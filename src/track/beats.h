@@ -11,7 +11,12 @@
 #include "util/memory.h"
 #include "util/types.h"
 
+namespace {
+double kMaxBpm = 500;
+}
+
 namespace mixxx {
+
 class Beats;
 using BeatsPointer = std::shared_ptr<Beats>;
 using BeatList = QList<track::io::Beat>;
@@ -88,7 +93,7 @@ class Beats : public QObject {
                 BEATSCAP_MOVEBEAT | BEATSCAP_HASBAR;
     }
     /// Serializes into a protobuff.
-    virtual QByteArray toByteArray() const;
+    virtual QByteArray toProtobuff() const;
     virtual BeatsPointer clone() const;
 
     /// Returns a string representing the version of the beat-processing code that
@@ -107,6 +112,7 @@ class Beats : public QObject {
     /// Initializes the BeatGrid to have a BPM of dBpm and the first beat offset
     /// of dFirstBeatSample. Does not generate an updated() signal, since it is
     /// meant for initialization.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     void setGrid(double dBpm, double sample = 0) {
         setGridNew(dBpm, sample / 2.0);
     }
@@ -118,6 +124,7 @@ class Beats : public QObject {
     /// Starting from frame, return the frame number of the next beat
     /// in the track, or -1 if none exists. If frame refers to the location
     /// of a beat, frame is returned.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double findNextBeat(double sample) const {
         return findNextBeatNew(sample / 2.0) * 2.0;
     }
@@ -126,6 +133,7 @@ class Beats : public QObject {
     /// Starting from frame frame, return the frame number of the previous
     /// beat in the track, or -1 if none exists. If frame refers to the
     /// location of beat, frame is returned.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double findPrevBeat(FrameNum frame) const {
         return findPrevBeatNew(frame / 2.0) * 2.0;
     }
@@ -137,6 +145,7 @@ class Beats : public QObject {
     /// value is the next beat position.  Non- -1 values are guaranteed to be
     /// even.  Returns false if *at least one* sample is -1.  (Can return false
     /// with one beat successfully filled)
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual bool findPrevNextBeats(double sample,
             double* pPrevSample,
             double* pNextSample) const {
@@ -155,6 +164,7 @@ class Beats : public QObject {
     /// Starting from frame, return the frame number of the closest beat
     /// in the track, or -1 if none exists.  Non- -1 values are guaranteed to be
     /// even.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double findClosestBeat(double sample) const {
         return findClosestBeatNew(sample / 2.0) * 2.0;
     }
@@ -163,11 +173,13 @@ class Beats : public QObject {
     /// Find the Nth beat from frame. Works with both positive and
     /// negative values of n. If frame refers to the location of a beat,
     /// then frame is returned. If no beat can be found, returns -1.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double findNthBeat(double sample, int offset) const {
         return findNthBeatNew(sample / 2.0, offset) * 2.0;
     }
     virtual FrameNum findNthBeatNew(FrameNum frame, int offset) const;
 
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     int numBeatsInRange(double startSampleNum, double endSampleNum) {
         return numBeatsInRangeNew(startSampleNum / 2.0, endSampleNum / 2.0);
     }
@@ -175,6 +187,7 @@ class Beats : public QObject {
 
     /// Find the frame N beats away from frame. The number of beats may be
     /// negative and does not need to be an integer.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     double findNBeatsFromSample(double sample, double beats) const {
         return findNBeatsFromSampleNew(sample / 2.0, beats) * 2.0;
     }
@@ -184,6 +197,7 @@ class Beats : public QObject {
     /// between startFrameNum and endFrameNum. THe BeatIterator must be iterated
     /// while a strong reference to the Beats object to ensure that the Beats
     /// object is not deleted. Caller takes ownership of the returned BeatsIterator
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual std::unique_ptr<BeatIterator> findBeats(double startSampleNum,
             double stopSampleNum) const {
         return findBeatsNew(startSampleNum / 2.0, stopSampleNum / 2.0);
@@ -192,6 +206,7 @@ class Beats : public QObject {
             FrameNum stopFrameNum) const;
 
     /// Return whether or not a Beat lies between startFrameNum and endFrameNum
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual bool hasBeatInRange(double startSampleNum,
             double stopSampleNum) const {
         return hasBeatInRangeNew(startSampleNum / 2.0, stopSampleNum / 2.0);
@@ -208,6 +223,7 @@ class Beats : public QObject {
 
     /// Return the average BPM over the range from startFrameNum to endFrameNum,
     /// specified in frames if the BPM is valid, otherwise returns -1
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double getBpmRange(double startSampleNum,
             FrameNum stopSampleNum) const {
         return getBpmRangeNew(startSampleNum / 2.0, stopSampleNum / 2.0);
@@ -218,6 +234,7 @@ class Beats : public QObject {
     /// Return the average BPM over the range of n*2 beats centered around
     /// curFrameNum.  (An n of 4 results in an averaging of 8 beats).  Invalid
     /// BPM returns -1.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual double getBpmAroundPosition(double curSampleNum, int n) const {
         if(isTempoConst()) {
             return getGlobalBpm();
@@ -233,18 +250,21 @@ class Beats : public QObject {
     }
 
     /// Sets the track signature at the nearest frame
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual void setSignature(TimeSignature signature, double sample = 0) {
         setSignatureNew(signature, sample / 2.0);
     }
     virtual void setSignatureNew(TimeSignature signature, FrameNum frame = 0);
 
     /// Return the track signature at the given frame position
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual TimeSignature getSignature(double sample = 0) const {
         return getSignatureNew(sample / 2.0);
     }
     virtual TimeSignature getSignatureNew(FrameNum frame = 0) const;
 
     /// Sets the nearest beat as a bar beat
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual void setDownBeat(double sample = 0) {
         setDownBeatNew(sample / 2.0);
     }
@@ -252,6 +272,7 @@ class Beats : public QObject {
 
     /// Add a beat at location frame. Beats instance must have the
     /// capability BEATSCAP_ADDREMOVE.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual void addBeat(double sample) {
         addBeatNew(sample / 2.0);
     }
@@ -259,6 +280,7 @@ class Beats : public QObject {
 
     /// Remove a beat at location frame. Beats instance must have the
     /// capability BEATSCAP_ADDREMOVE.
+    // TODO(JVC) Temporary adaptor. Will be removed before finalizing the PR
     virtual void removeBeat(double sample) {
         removeBeatNew(sample / 2.0);
     }
@@ -268,7 +290,7 @@ class Beats : public QObject {
     /// Translate all beats in the song by dNumSamples samples. Beats that lie
     /// before the start of the track or after the end of the track are not
     /// removed. Beats instance must have the capability BEATSCAP_TRANSLATE.
-    virtual void translate(double dNumSamples);
+    virtual void translate(FrameNum dNumFrames);
 
     /// Scale the position of every beat in the song by dScalePercentage. Beats
     /// class must have the capability BEATSCAP_SCALE.
